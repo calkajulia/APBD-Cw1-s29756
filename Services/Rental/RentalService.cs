@@ -29,6 +29,25 @@ public class RentalService : IRentalService
         return rental;
     }
 
+    public Rental RentWithDueDate(User user, Equipment equipment, DateTime dueDate)
+    {
+        if (equipment.Status != EquipmentStatus.Available)
+        {
+            throw new EquipmentUnavailableException(equipment.Name);
+        }
+
+        var usersActiveRentals = GetUsersActiveRentals(user.Id);
+        if (usersActiveRentals.Count >= user.RentalsLimit)
+        {
+            throw new RentalLimitExceededException($"{user.FirstName} {user.LastName}", user.RentalsLimit);
+        }
+
+        var rental = new Rental(user, equipment, dueDate);
+        equipment.Status = EquipmentStatus.Rented;
+        _rentals.Add(rental);
+        return rental;
+    }
+
     public void Return(Guid rentalId)
     {
         var rental = GetById(rentalId);
