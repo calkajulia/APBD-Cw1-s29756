@@ -1,3 +1,4 @@
+using APBD_Cw1_s29756.Enums;
 using APBD_Cw1_s29756.Models;
 using APBD_Cw1_s29756.Services;
 
@@ -135,8 +136,7 @@ public class ConsoleUI
     {
         Console.Write("Resolution: ");
         var resolution = Console.ReadLine()!;
-        Console.Write("Is portable? (y/n): ");
-        var portable = Console.ReadLine()?.ToLower() == "y";
+        var portable = ReadBool("Is portable? (y/n): ");
         return new Projector(name, brand, resolution, portable);
     }
 
@@ -144,9 +144,20 @@ public class ConsoleUI
     {
         Console.Write("Recording format: ");
         var format = Console.ReadLine()!;
-        Console.Write("Is waterproof? (y/n): ");
-        var waterproof = Console.ReadLine()?.ToLower() == "y";
+        var waterproof = ReadBool("Is waterproof? (y/n): ");
         return new Camera(name, brand, format, waterproof);
+    }
+
+    private static bool ReadBool(string prompt)
+    {
+        while (true)
+        {
+            Console.Write(prompt);
+            var input = Console.ReadLine()?.ToLower();
+            if (input == "y") return true;
+            if (input == "n") return false;
+            Console.WriteLine("Please enter y or n.");
+        }
     }
 
     private void ShowAllEquipment()
@@ -205,6 +216,19 @@ public class ConsoleUI
 
     private void ReturnEquipment()
     {
+        var activeRentals = _rentalService.GetAll().Where(r => r.IsActive).ToList();
+        if (activeRentals.Count == 0)
+        {
+            Console.WriteLine("No active rentals.");
+            return;
+        }
+
+        Console.WriteLine("-- Active Rentals --");
+        foreach (var r in activeRentals)
+        {
+            Console.WriteLine($"  {r.User.FirstName} {r.User.LastName} — {r.Equipment.Name} — due: {r.DueDate:yyyy-MM-dd} — ID: {r.Id}");
+        }
+
         Console.Write("Rental ID: ");
         if (!Guid.TryParse(Console.ReadLine(), out var rentalId)) { Console.WriteLine("Invalid ID."); return; }
 
@@ -224,6 +248,12 @@ public class ConsoleUI
 
     private void SetEquipmentUnavailable()
     {
+        Console.WriteLine("-- Available Equipment --");
+        foreach (var e in _equipmentService.GetAvailable())
+        {
+            Console.WriteLine($"  {e.Name} ({e.Brand}) - ID: {e.Id}");
+        }
+
         Console.Write("Equipment ID: ");
         if (!Guid.TryParse(Console.ReadLine(), out var id)) { Console.WriteLine("Invalid ID."); return; }
 
@@ -240,6 +270,12 @@ public class ConsoleUI
 
     private void SetEquipmentAvailable()
     {
+        Console.WriteLine("-- Unavailable Equipment --");
+        foreach (var e in _equipmentService.GetAll().Where(e => e.Status == EquipmentStatus.Unavailable))
+        {
+            Console.WriteLine($"  {e.Name} ({e.Brand}) - ID: {e.Id}");
+        }
+
         Console.Write("Equipment ID: ");
         if (!Guid.TryParse(Console.ReadLine(), out var id)) { Console.WriteLine("Invalid ID."); return; }
 
@@ -256,6 +292,12 @@ public class ConsoleUI
 
     private void ShowActiveRentalsForUser()
     {
+        Console.WriteLine("-- Users --");
+        foreach (var u in _userService.GetAll())
+        {
+            Console.WriteLine($"  {u.FirstName} {u.LastName} - ID: {u.Id}");
+        }
+
         Console.Write("User ID: ");
         if (!Guid.TryParse(Console.ReadLine(), out var userId)) { Console.WriteLine("Invalid ID."); return; }
 
